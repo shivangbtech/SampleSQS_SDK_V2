@@ -16,7 +16,7 @@ A Spring Boot example demonstrating AWS SQS (Standard & FIFO) integration using 
 src/
   main/java/com/example/sqs/
     controller/       # REST API for sending messages
-    service/          # SqsSender encapsulates AWS SQS interactions
+    service/          # SqsSender encapsulates AWS SQS interactions (Use SqsAsyncSender for async call)
     config/           # AWS SDK & ElasticMQ endpoint configuration (SqsConfig)
     SampleSqsApp.java # Main @SpringBootApplication class
 Dockerfile           # Container image build
