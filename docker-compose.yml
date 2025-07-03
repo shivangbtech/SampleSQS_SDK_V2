@@ -1,0 +1,34 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - SERVICE_SQS_CONNECTION_URL=http://elasticmq:9324
+    depends_on:
+      - elasticmq
+    networks:
+      - sqs-net
+
+  elasticmq:
+    image: softwaremill/elasticmq-native
+    ports:
+      - "9324:9324"  # SQS endpoint
+      - "9325:9325"  # Web UI
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf
+    command: -Dconfig.file=/opt/elasticmq.conf
+    environment:
+      - JAVA_OPTS=-Delasticmq.rest.port=9324
+      - CONFIG_FILE=/opt/elasticmq.conf
+      - ELASTICMQ_UI=true
+      - JAVA_OPTS=-Dconfig.file=/opt/elasticmq.conf
+      - JAVA_TOOL_OPTIONS=-Dcom.amazonaws.sdk.disableEc2Metadata=true
+    networks:
+      - sqs-net
+
+networks:
+  sqs-net:
+    driver: bridge

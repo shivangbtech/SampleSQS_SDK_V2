@@ -1,0 +1,4 @@
+sqs:
+  endpoint: http://elasticmq:9324
+  region: us-east-1
+  queueName: my-standard-queue
