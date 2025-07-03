@@ -1,58 +1,95 @@
-# Spring Boot SQS Integration with ElasticMQ (Local Setup)
+# SampleSQS_SDK_V2 🌟
 
-This project demonstrates how to use **Spring Boot** with **AWS SQS** using **ElasticMQ** (a lightweight in-memory SQS-compatible message broker), suitable for local development and testing.
-
----
+A Spring Boot example demonstrating AWS SQS (Standard & FIFO) integration using AWS SDK v2 and ElasticMQ for local testing.
 
 ## ✅ Features
 
-- SQS integration using Spring Cloud AWS
-- FIFO and Standard Queue handling
-- DLQ (Dead Letter Queue) setup
-- Docker Compose integration with ElasticMQ
-- Automatic queue creation at startup
-- Message listener using `@SqsListener`
+- Sending messages to Standard queue
+- (Optionally) Support for FIFO queue
+- Local SQS emulation using ElasticMQ (Docker)
+- Spring Boot REST interface for message sending
+- AWS SDK v2 for SQS operations
 
----
+## 📁 Project Structure
 
-## 🧱 Project Structure
+```
+src/
+  main/java/com/example/sqs/
+    controller/       # REST API for sending messages
+    service/          # SqsSender encapsulates AWS SQS interactions
+    config/           # AWS SDK & ElasticMQ endpoint configuration (SqsConfig)
+    SampleSqsApp.java # Main @SpringBootApplication class
+Dockerfile           # Container image build
+docker-compose.yml   # Launches ElasticMQ + Spring Boot app
+elasticmq.conf       # Custom ElasticMQ configuration
+pom.xml              # Maven project configuration
+README.md            # This documentation
+```
 
-| Component               | Description                                                  |
-|------------------------|--------------------------------------------------------------|
-| `SqsDemoApplication`   | Main Spring Boot application class                           |
-| `SqsQueueInitializer`  | Java class to auto-create queues if they don't exist         |
-| `application.yml`      | Config to connect to ElasticMQ instead of AWS SQS            |
-| `docker-compose.yml`   | Starts ElasticMQ and Spring Boot app using Docker Compose    |
+## 🛠️ Prerequisites
 
----
-
-## ⚙️ Prerequisites
-
-- Java 8 or higher
+- Java 8
 - Maven 3.6+
 - Docker & Docker Compose
 
----
-
 ## 🚀 Getting Started
 
-### 1. Build the application:
-
+### Build the project
 ```bash
 mvn clean package -DskipTests
 ```
 
-## Run using Docker Compose:
+### Run locally with Docker Compose
 ```bash
-docker-compose down -v       # Clean existing volumes and containers
-
-docker-compose up -d --build # Start the services
+docker-compose down -v
+docker-compose up --build
 ```
-Your Spring Boot app will be accessible on: http://localhost:8080
+- Spring Boot API: `http://localhost:8080`
+- ElasticMQ SQS endpoint: `http://localhost:9324`
 
-ElasticMQ console (optional): http://localhost:9324
+## 📡 Using the API
 
-## cURL to use
+Send a message to the standard queue:
+```bash
+curl -X POST "http://localhost:8080/api/sqs/standard?message=HelloSQS"
+```
 
-### To post message to standard queue:
-curl --location --request POST 'http://localhost:8080/api/sqs/standard?message=HelloSQS'
+<Response>
+```
+Sent to standard queue
+```
+
+## ⚙️ How it works
+
+- `SqsSender` builds an `SqsClient` with the ElasticMQ endpoint.
+- Spring injects this client into a service used by the REST controller.
+- Messages are sent using `SendMessageRequest`.
+- On-the-fly queue creation may be handled in `SqsConfig` or queue initializer.
+
+## ⚠️ Troubleshooting
+
+- **Connection refused to `localhost:9324`**?  
+  Ensure Docker Compose correctly links `app` and `elasticmq` under a common network.  
+  Example `docker-compose.yml` segment:
+
+  ```yaml
+  services:
+    elasticmq:
+      image: softwaremill/elasticmq-native
+      ports:
+        - "9324:9324"
+    app:
+      build: .
+      ports:
+        - "8080:8080"
+      depends_on:
+        - elasticmq
+      environment:
+        - AWS_SQS_ENDPOINT=http://elasticmq:9324
+  ```
+
+## 📝 Notes
+
+- ElasticMQ simulates AWS SQS locally – no AWS account or network required.
+- AWS SDK v2 provides modern, modular, and async-capable clients.
+- You can extend this to include FIFO queues by enabling the commented FIFO endpoint in the controller.
